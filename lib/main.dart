@@ -120,29 +120,6 @@ class _MyHomePageState extends State<MyHomePage> {
 
             return SafeArea(
               child: Container(
-                decoration: index % 2 == 0
-                    ? const BoxDecoration(
-                    gradient: LinearGradient(
-                        colors: [
-                          Color(0x27000000),
-                          Colors.transparent,
-                          Colors.transparent,
-                          Colors.transparent,
-                          Colors.transparent
-                        ],
-                        begin: Alignment.centerLeft,
-                        end: Alignment.centerRight))
-                    : const BoxDecoration(
-                    gradient: LinearGradient(
-                        colors: [
-                          Color(0x27000000),
-                          Colors.transparent,
-                          Colors.transparent,
-                          Colors.transparent,
-                          Colors.transparent
-                        ],
-                        begin: Alignment.centerRight,
-                        end: Alignment.centerLeft)),
                 child: Padding(
                   padding: const EdgeInsets.all(12.0),
                   child: SingleChildScrollView(
