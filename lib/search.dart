@@ -29,22 +29,17 @@ class Search extends SearchDelegate {
 
   @override
   Widget buildResults(BuildContext context) {
-
-
-
     return ListView.builder(
         itemCount: data.length, //data?.length,
         itemBuilder: (context, index) {
-
           if(!(data[index]["text"].toString().contains(query))){
             return const SizedBox.shrink();
           }
-
           return ListTile(
             title: Row(
               children: [
-                Expanded(
-                  child: InkWell(
+                Expanded (
+                  child: InkWell (
                     highlightColor: Colors.transparent,
                     splashColor: Colors.transparent,
                     onTap: (){
@@ -59,7 +54,7 @@ class Search extends SearchDelegate {
 
                     borderRadius: BorderRadius.circular(20),
                     ),
-                    child:  Text(data[index]["text"].toString(),style: const TextStyle(
+                    child:  Text(data[index]["aya_text"].toString(),style: const TextStyle(
                     fontFamily: 'Kitab',
                     color: Colors.black,
                     fontSize: 24,
