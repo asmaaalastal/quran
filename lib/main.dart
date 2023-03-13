@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:quran_app_multi_way/search.dart';
 import 'package:flutter/material.dart' as material;
@@ -25,10 +26,6 @@ class MyApp extends StatelessWidget{
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      localizationsDelegates: context.localizationDelegates,
-      supportedLocales: context.supportedLocales,
-      debugShowCheckedModeBanner: false,
-      locale: context.locale,
       title: 'Quran App',
       theme: ThemeData(
         primarySwatch: Colors.blue,
@@ -45,34 +42,28 @@ class MyHomePage extends StatefulWidget  {
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage>{
+class _MyHomePageState extends State<MyHomePage> {
   int currentPage = 1;
   bool isLoading = false;
   dynamic data;
+  List item = [];
 
-  late PageController pageController;
-  void getData({String? query }) async {
-    http.Response response = await http.get(
-      Uri.parse('http://api.alquran.cloud/v1/page/$currentPage/quran-uthmani'),
-    );
-    var result = jsonDecode(response.body);
+  PageController pageController = PageController();
+
+  Future<void> getData() async {
+    String response = await rootBundle.loadString('assets/hafs_smart_v8.json');
+    var result = await jsonDecode(response);
     print(result);
-    if (response.statusCode == 200) {
-      setState(() {
-        isLoading = true;
-        data = result['data']['ayahs'] as List;
-      });
-      if(query != null){
-        data = data.where((element) => element.name!.toLowerCase().contains((query.toLowerCase()))).toList();
-      }
-    }
+    setState(() {
+      item = result["sura"];
+    });
   }
+
 
   @override
   void initState() {
     getData();
     super.initState();
-    pageController = PageController(initialPage: 1);
   }
 
   @override
@@ -82,83 +73,155 @@ class _MyHomePageState extends State<MyHomePage>{
         title: const Text('Quran App'),
         actions: [
           IconButton(
-              onPressed: (){
-                showSearch(context: context, delegate: Search(data: data));},
-              icon: const   Icon(Icons.search,size: 35,)),
+              onPressed: () {
+                showSearch(context: context, delegate: Search(data: item));
+              },
+              icon: const Icon(Icons.search, size: 35,)),
         ],
       ),
-      body: Center(
-        child: !isLoading
-            ? const CircularProgressIndicator()
-            : SafeArea(
-                child: PageView.builder(
-                  itemCount: 604,
-                  controller: pageController,
-                  onPageChanged: (page) {
-                    print(page);
-                    data = [];
-                    setState(() {
-                      currentPage = page;
-                    });
-                    getData();
-                  },
-                  itemBuilder: (BuildContext context, int index) {
-                    return Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: RichText(
-                        overflow: TextOverflow.visible,
-                        textAlign: TextAlign.justify,
-                        locale: context.locale,
-                     textDirection: material.TextDirection.rtl,
-                        text: TextSpan(
-                            text: '',
-                            recognizer: DoubleTapGestureRecognizer()
-                              ..onDoubleTap = () {
-                                setState(() {});
-                              },
-                            style: const TextStyle(
-                              fontFamily: 'Kitab',
-                              color: Colors.black,
-                              fontSize: 24,
-                              // height: 2,
-                              textBaseline: TextBaseline.alphabetic,
+      body:PageView.builder(
+        controller: pageController,
+        reverse: true,
+        itemBuilder: (BuildContext context, int index) {
+          if (item.isNotEmpty) {
+            String byPage = '';
+            String surahName = '';
+            int jozzNum = 0;
+            bool isBasmalahShown = false;
 
+            for (Map ayahData in item) {
+              if (ayahData['page'] == index + 1) {
+                byPage = byPage + ' ${ayahData['aya_text']}';
+              }
+            }
 
+            for (Map ayahData in item) {
+              if (ayahData['page'] == index + 1) {
+                surahName = ayahData['sura_name_ar'];
+              }
+            }
+
+            for (Map ayahData in item) {
+              if (ayahData['page'] == index + 1) {
+                jozzNum = ayahData['jozz'];
+              }
+            }
+
+            for (Map ayahData in item) {
+              if (ayahData['page'] == index + 1) {
+                if (ayahData['aya_no'] == 1 &&
+                    ayahData['sura_name_ar'] != 'الفَاتِحة' &&
+                    ayahData['sura_name_ar'] != 'التوبَة') {
+                  isBasmalahShown = true;
+                  break;
+                }
+              }
+            }
+
+            return SafeArea(
+              child: Container(
+                decoration: index % 2 == 0
+                    ? const BoxDecoration(
+                    gradient: LinearGradient(
+                        colors: [
+                          Color(0x27000000),
+                          Colors.transparent,
+                          Colors.transparent,
+                          Colors.transparent,
+                          Colors.transparent
+                        ],
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight))
+                    : const BoxDecoration(
+                    gradient: LinearGradient(
+                        colors: [
+                          Color(0x27000000),
+                          Colors.transparent,
+                          Colors.transparent,
+                          Colors.transparent,
+                          Colors.transparent
+                        ],
+                        begin: Alignment.centerRight,
+                        end: Alignment.centerLeft)),
+                child: Padding(
+                  padding: const EdgeInsets.all(12.0),
+                  child: SingleChildScrollView(
+                    child: Column(
+                      children: [
+                        Align(
+                          alignment: Alignment.topCenter,
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Row(
+                              mainAxisAlignment:
+                              MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'الجزء $jozzNum',
+                                  style: const TextStyle(
+                                      fontFamily: 'Kitab', fontSize: 20),
+                                  textAlign: TextAlign.center,
+                                  textDirection: material.TextDirection.rtl,
+                                ),
+                                Text(
+                                  surahName,
+                                  style: const TextStyle(
+                                      fontFamily: 'Kitab', fontSize: 20),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ],
                             ),
-
+                          ),
+                        ),
+                        Align(
+                          alignment: Alignment.center,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
-                              for (int i = 0; i < data.length; i++) ...{
-                                TextSpan(
-                                  text: '${data[i]['text']}',
-                                ),
-
-                                WidgetSpan(
-                                  baseline: TextBaseline.alphabetic,
-                                  child: Container(
-                                    padding: const EdgeInsets.all(8),
-                                    margin: const EdgeInsets.symmetric(
-                                        horizontal: 6, vertical: 8),
-                                    decoration: BoxDecoration(
-                                      image: const DecorationImage(
-                                        opacity: 0.5,
-                                        image: AssetImage(
-                                          'images/end.png',
-                                        ),
-                                      ),
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                    child: Text('${data[i]['numberInSurah']}'),
-                                  ),
-                                ),
-                              }
-                            ]),
-                      ),
-
-                    );
-                  },
+                              isBasmalahShown
+                                  ? const Text(
+                                "‏ ‏‏ ‏‏‏‏ ‏‏‏‏‏‏ ‏",
+                                textDirection: material.TextDirection.rtl,
+                                style: TextStyle(
+                                    fontFamily: 'Hafs', fontSize: 22),
+                                textAlign: TextAlign.center,
+                              )
+                                  : Container(),
+                              const SizedBox(
+                                height: 15,
+                              ),
+                              Text(
+                                byPage,
+                                textDirection: material.TextDirection.rtl,
+                                style: const TextStyle(
+                                    fontFamily: 'Hafs', fontSize: 22),
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
+                          ),
+                        ),
+                        Align(
+                            alignment: Alignment.bottomCenter,
+                            child: Text(
+                              '${index + 1}',
+                              style: const TextStyle(
+                                  fontFamily: 'Kitab', fontSize: 18),
+                            ))
+                      ],
+                    ),
+                  ),
                 ),
               ),
+            );
+          } else {
+            return const Center(
+                child: CircularProgressIndicator(
+                  backgroundColor: Color(0xffbce0c5),
+                ));
+          }
+        },
       ),
+
     );
   }
 }

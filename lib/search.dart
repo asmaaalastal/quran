@@ -8,12 +8,11 @@ class Search extends SearchDelegate {
   Search({required this.data});
 
   @override
-
   List<Widget>? buildActions(BuildContext context) {
     return [
       IconButton(icon: const Icon(Icons.close), onPressed: () {
-        query = '' ;
-        },)
+        query = '';
+      },)
     ];
   }
 
@@ -21,62 +20,68 @@ class Search extends SearchDelegate {
   Widget? buildLeading(BuildContext context) {
     return
       IconButton(icon: const Icon(Icons.arrow_back_ios), onPressed: () {
-       Navigator.pop(context);
+        Navigator.pop(context);
       },);
-
   }
 
 
   @override
   Widget buildResults(BuildContext context) {
-    return ListView.builder(
-        itemCount: data.length, //data?.length,
-        itemBuilder: (context, index) {
-          if(!(data[index]["text"].toString().contains(query))){
-            return const SizedBox.shrink();
-          }
-          return ListTile(
-            title: Row(
-              children: [
-                Expanded (
-                  child: InkWell (
-                    highlightColor: Colors.transparent,
-                    splashColor: Colors.transparent,
-                    onTap: (){
-                      Navigator.pop(context);
-                    },
-                    child: Container(
-                    padding: const EdgeInsets.all(8),
-                    margin: const EdgeInsets.symmetric(
-                    horizontal: 6, vertical: 8),
-                    decoration: BoxDecoration(
-                    color: Colors.white60,
+    List results = [];
+    if (query.isNotEmpty) {
+      results = data.where((element) =>
+          element['aya_text_emlaey'].toString().contains(query.trim()))
+          .toList();
 
-                    borderRadius: BorderRadius.circular(20),
-                    ),
-                    child:  Text(data[index]["aya_text"].toString(),style: const TextStyle(
-                    fontFamily: 'Kitab',
-                    color: Colors.black,
-                    fontSize: 24,
-                    ),
-                    maxLines: 4,
-                      textDirection: TextDirection.rtl,
-                    )
-                    ,
-                    ),
-                  ),
-                ),
+      return ListView.separated(
+        itemBuilder: (context, index) {
+          return ListTile(
+            onTap: () {
+              Navigator.pushReplacementNamed(context, '/', arguments: [
+                results[index]['page'],
+                results[index]['id']
+              ]);
+            },
+            title: Text(
+              results[index]['aya_text'],
+              textDirection: TextDirection.rtl,
+              style: TextStyle(fontFamily: 'Hafs'),
+              textAlign: TextAlign.right,
+            ),
+            subtitle: Text(
+              results[index]['sura_name_ar'],
+              textDirection: TextDirection.rtl,
+              textAlign: TextAlign.right,
+            ),
+            leading: Column(
+              children: [
+                Text('الصفحة'),
+                Text(
+                  results[index]['page'].toString(),
+                  textDirection: TextDirection.rtl,
+                  textAlign: TextAlign.right,
+                )
               ],
             ),
           );
-        }
-    );
+        },
+        itemCount: results.length,
+        separatorBuilder: (BuildContext context, int index) {
+          return Divider();
+        },
+      );
+    }
+    else {
+      return Column(
+        children: [],
+      );
+    }
   }
+
   @override
   Widget buildSuggestions(BuildContext context) {
     return const Center(
       child: Text('Search result'),
     );
   }
-
 }
